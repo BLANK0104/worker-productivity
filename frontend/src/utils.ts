@@ -10,7 +10,7 @@ export function fmtDuration(seconds: number): string {
 
 /** Colour bucket for utilisation percentage */
 export function utilColour(pct: number): string {
-  if (pct >= 75) return '#22c55e';
+  if (pct >= 75) return '#10b981';
   if (pct >= 50) return '#f59e0b';
   return '#ef4444';
 }

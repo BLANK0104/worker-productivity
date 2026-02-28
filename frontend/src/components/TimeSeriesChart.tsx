@@ -40,7 +40,7 @@ export default function TimeSeriesChart({ entity_id, entity_type, entity_name, r
 
   if (loading) {
     return (
-      <div className="loading-state" style={{ padding: '24px 0' }}>
+      <div className="loading-state" style={{ padding: '20px 0' }}>
         <div className="spinner" />
         Loading chart…
       </div>
@@ -49,68 +49,88 @@ export default function TimeSeriesChart({ entity_id, entity_type, entity_name, r
 
   if (data.length === 0) {
     return (
-      <div style={{ color: 'var(--muted)', fontSize: 13, padding: '16px 0' }}>
+      <div className="empty-state" style={{ padding: '12px 0' }}>
         No time-series data available.
       </div>
     );
   }
 
+  const GRID   = '#1d2840';
+  const TICK   = { fill: '#64748b', fontSize: 11 };
+  const TT_STYLE = { background: '#131a26', border: '1px solid #243355', borderRadius: 8, color: '#f0f4ff', fontSize: 12 };
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <span style={{ fontSize: 13, color: 'var(--muted)' }}>{entity_name} — Daily Trend</span>
-        <div className="tabs" style={{ margin: 0 }}>
-          <button className={`tab-btn ${mode === 'units' ? 'active' : ''}`} onClick={() => setMode('units')}>
+        <span style={{ fontSize: 12, color: 'var(--muted)' }}>{entity_name} — Daily Trend</span>
+        <div style={{ display: 'flex', gap: 4, background: 'var(--surface2)', border: '1px solid var(--border)', padding: 3, borderRadius: 8 }}>
+          <button
+            style={{ padding: '4px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: 'inherit',
+              background: mode === 'units' ? 'var(--surface3)' : 'transparent',
+              color: mode === 'units' ? 'var(--text)' : 'var(--muted)',
+              boxShadow: mode === 'units' ? '0 1px 3px rgba(0,0,0,.3)' : 'none',
+            }}
+            onClick={() => setMode('units')}
+          >
             Units
           </button>
-          <button className={`tab-btn ${mode === 'utilization' ? 'active' : ''}`} onClick={() => setMode('utilization')}>
+          <button
+            style={{ padding: '4px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: 'inherit',
+              background: mode === 'utilization' ? 'var(--surface3)' : 'transparent',
+              color: mode === 'utilization' ? 'var(--text)' : 'var(--muted)',
+              boxShadow: mode === 'utilization' ? '0 1px 3px rgba(0,0,0,.3)' : 'none',
+            }}
+            onClick={() => setMode('utilization')}
+          >
             Utilization
           </button>
         </div>
       </div>
 
       {mode === 'units' ? (
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" height={180}>
           <BarChart data={data} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2e3348" />
-            <XAxis dataKey="date" tickFormatter={formatDate} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-            <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={GRID} vertical={false} />
+            <XAxis dataKey="date" tickFormatter={formatDate} tick={TICK} axisLine={false} tickLine={false} />
+            <YAxis tick={TICK} axisLine={false} tickLine={false} />
             <Tooltip
               formatter={(v: number) => [v.toLocaleString(), 'Units']}
               labelFormatter={formatDate}
-              contentStyle={{ background: '#1a1d27', border: '1px solid #2e3348', borderRadius: 8, color: '#e2e8f0' }}
+              contentStyle={TT_STYLE}
+              cursor={{ fill: 'rgba(255,255,255,0.04)' }}
             />
-            <Bar dataKey="units" fill="#4f8ef7" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="units" fill="#3b82f6" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       ) : (
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" height={180}>
           <ComposedChart data={data} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2e3348" />
-            <XAxis dataKey="date" tickFormatter={formatDate} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-            <YAxis yAxisId="left" domain={[0, 100]} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-            <YAxis yAxisId="right" orientation="right" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={GRID} vertical={false} />
+            <XAxis dataKey="date" tickFormatter={formatDate} tick={TICK} axisLine={false} tickLine={false} />
+            <YAxis yAxisId="left" domain={[0, 100]} tick={TICK} axisLine={false} tickLine={false} />
+            <YAxis yAxisId="right" orientation="right" tick={TICK} axisLine={false} tickLine={false} />
             <Tooltip
               formatter={(v: number, name: string) =>
                 name === 'utilization_pct' ? [`${v.toFixed(1)}%`, 'Utilization'] : [`${v.toFixed(1)}h`, 'Active Hrs']
               }
               labelFormatter={formatDate}
-              contentStyle={{ background: '#1a1d27', border: '1px solid #2e3348', borderRadius: 8, color: '#e2e8f0' }}
+              contentStyle={TT_STYLE}
+              cursor={{ fill: 'rgba(255,255,255,0.04)' }}
             />
-            <Legend wrapperStyle={{ fontSize: 12, color: '#94a3b8' }} />
+            <Legend wrapperStyle={{ fontSize: 11, color: '#64748b' }} />
             <Area
               yAxisId="left"
               type="monotone"
               dataKey="utilization_pct"
-              fill="rgba(79,142,247,0.15)"
-              stroke="#4f8ef7"
+              fill="rgba(59,130,246,0.12)"
+              stroke="#3b82f6"
               strokeWidth={2}
             />
             <Line
               yAxisId="right"
               type="monotone"
               dataKey="active_hours"
-              stroke="#22c55e"
+              stroke="#10b981"
               strokeWidth={2}
               dot={false}
             />

@@ -30,16 +30,35 @@ export default function WorkerDetail({ worker, metrics, range, onClose }: Props)
     : [];
 
   return (
-    <div className="card" style={{ position: 'sticky', top: 80, height: 'fit-content' }}>
+    <div className="card" style={{ position: 'sticky', top: 80, height: 'fit-content', maxHeight: 'calc(100vh - 100px)', overflowY: 'auto' }}>
       <div className="card-header">
-        <span className="card-title">Worker Detail</span>
-        <button className="btn btn-sm" onClick={onClose}>✕ Close</button>
+        <span className="card-title">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          Worker Detail
+        </span>
+        <button className="btn btn-sm btn-ghost" onClick={onClose}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 20, fontWeight: 700 }}>{worker.name}</div>
-        <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-          {worker.worker_id} · {worker.department} · {worker.shift} Shift
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+        <div style={{
+          width: 48, height: 48, borderRadius: '50%',
+          background: 'rgba(59,130,246,0.15)', color: 'var(--accent-hover)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 18, fontWeight: 700, flexShrink: 0,
+        }}>
+          {worker.name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()}
+        </div>
+        <div>
+          <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>{worker.name}</div>
+          <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
+            {worker.worker_id} &nbsp;·&nbsp; {worker.department} &nbsp;·&nbsp; {worker.shift} Shift
+          </div>
         </div>
       </div>
 
@@ -61,7 +80,7 @@ export default function WorkerDetail({ worker, metrics, range, onClose }: Props)
                   dataKey="value"
                   cornerRadius={4}
                   fill={utilColour(metrics.utilization_pct)}
-                  background={{ fill: '#2e3348' }}
+                  background={{ fill: '#192034' }}
                 />
               </RadialBarChart>
             </ResponsiveContainer>
@@ -105,7 +124,7 @@ export default function WorkerDetail({ worker, metrics, range, onClose }: Props)
           {timeData.length > 0 && (
             <>
               <div className="sep" />
-              <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600, marginBottom: 8 }}>TIME BREAKDOWN</div>
+              <div className="mini-title">Time Breakdown</div>
               <div style={{ height: 160 }}>
                 <ResponsiveContainer>
                   <PieChart>
@@ -114,7 +133,7 @@ export default function WorkerDetail({ worker, metrics, range, onClose }: Props)
                     </Pie>
                     <Tooltip
                       formatter={(v: number) => [fmtDuration(v), '']}
-                      contentStyle={{ background: '#1a1d27', border: '1px solid #2e3348', borderRadius: 8, color: '#e2e8f0' }}
+                      contentStyle={{ background: '#131a26', border: '1px solid #243355', borderRadius: 8, color: '#f0f4ff', fontSize: 12 }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -132,7 +151,7 @@ export default function WorkerDetail({ worker, metrics, range, onClose }: Props)
 
           {/* Daily trend chart */}
           <div className="sep" />
-          <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600, marginBottom: 8 }}>DAILY TREND</div>
+          <div className="mini-title">Daily Trend</div>
           <TimeSeriesChart
             entity_id={worker.worker_id}
             entity_type="worker"
@@ -142,7 +161,7 @@ export default function WorkerDetail({ worker, metrics, range, onClose }: Props)
 
           {/* Shift comparison */}
           <div className="sep" />
-          <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600, marginBottom: 8 }}>TODAY vs 7-DAY AVG</div>
+          <div className="mini-title">Today vs 7-Day Avg</div>
           <ShiftComparison worker_id={worker.worker_id} worker_name={worker.name} />
         </>
       )}

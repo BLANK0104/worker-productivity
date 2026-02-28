@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import type { Worker, WorkerMetrics } from '../types';
 import { fmtDuration, utilBadge, r1 } from '../utils';
 
@@ -11,6 +11,27 @@ interface Props {
 
 type SortKey = 'worker_id' | 'active_time_seconds' | 'utilization_pct' | 'total_units_produced' | 'units_per_hour';
 
+const AVATAR_COLORS = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899','#14b8a6'];
+
+function getAvatarColor(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
+const SortIcon = ({ active, dir }: { active: boolean; dir: 1 | -1 }) => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"
+    style={{ opacity: active ? 1 : 0.3, color: active ? 'var(--accent-hover)' : 'inherit', marginLeft: 3 }}>
+    {dir === -1 ? <polyline points="6 9 12 15 18 9"/> : <polyline points="18 15 12 9 6 15"/>}
+  </svg>
+);
+
 export default function WorkerTable({ workers, metrics, selected, onSelect }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('utilization_pct');
   const [sortDir, setSortDir] = useState<1 | -1>(-1);
@@ -22,8 +43,6 @@ export default function WorkerTable({ workers, metrics, selected, onSelect }: Pr
     if (sortKey === key) setSortDir((d) => (d === 1 ? -1 : 1));
     else { setSortKey(key); setSortDir(-1); }
   };
-
-  const arrow = (key: SortKey) => sortKey === key ? (sortDir === -1 ? ' ↓' : ' ↑') : '';
 
   const filtered = metrics.filter((m) => {
     const w = workerMap[m.worker_id];
@@ -42,37 +61,62 @@ export default function WorkerTable({ workers, metrics, selected, onSelect }: Pr
   return (
     <div className="card">
       <div className="card-header">
-        <span className="card-title">Workers ({metrics.length})</span>
-        <input
-          type="text"
-          placeholder="Search worker…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ width: 160 }}
-        />
+        <span className="card-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          Workers ({metrics.length})
+        </span>
+        <div className="search-wrap">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Search workersâ€¦"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: 180 }}
+          />
+        </div>
       </div>
       <div className="table-wrap">
         <table>
           <thead>
             <tr>
               <th>Worker</th>
-              <th style={{ cursor: 'pointer' }} onClick={() => toggle('active_time_seconds')}>Active Time{arrow('active_time_seconds')}</th>
-              <th style={{ cursor: 'pointer' }} onClick={() => toggle('idle_time_seconds' as SortKey)}>Idle Time</th>
-              <th style={{ cursor: 'pointer' }} onClick={() => toggle('utilization_pct')}>Utilization{arrow('utilization_pct')}</th>
-              <th style={{ cursor: 'pointer' }} onClick={() => toggle('total_units_produced')}>Units{arrow('total_units_produced')}</th>
-              <th style={{ cursor: 'pointer' }} onClick={() => toggle('units_per_hour')}>U/hr{arrow('units_per_hour')}</th>
+              <th className={`sortable ${sortKey === 'active_time_seconds' ? 'sort-active' : ''}`} onClick={() => toggle('active_time_seconds')}>
+                Active <SortIcon active={sortKey === 'active_time_seconds'} dir={sortDir} />
+              </th>
+              <th>Idle</th>
+              <th className={`sortable ${sortKey === 'utilization_pct' ? 'sort-active' : ''}`} onClick={() => toggle('utilization_pct')}>
+                Utilization <SortIcon active={sortKey === 'utilization_pct'} dir={sortDir} />
+              </th>
+              <th className={`sortable ${sortKey === 'total_units_produced' ? 'sort-active' : ''}`} onClick={() => toggle('total_units_produced')}>
+                Units <SortIcon active={sortKey === 'total_units_produced'} dir={sortDir} />
+              </th>
+              <th className={`sortable ${sortKey === 'units_per_hour' ? 'sort-active' : ''}`} onClick={() => toggle('units_per_hour')}>
+                U/hr <SortIcon active={sortKey === 'units_per_hour'} dir={sortDir} />
+              </th>
             </tr>
           </thead>
           <tbody>
             {sorted.length === 0 && (
-              <tr>
-                <td colSpan={6} style={{ color: 'var(--muted)', textAlign: 'center', padding: '32px' }}>
-                  No data. Click "+ Add Dummy Data" to seed.
+              <tr style={{ cursor: 'default' }}>
+                <td colSpan={6}>
+                  <div className="empty-state">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                    </svg>
+                    No worker data. Click "Add Data" to seed.
+                  </div>
                 </td>
               </tr>
             )}
             {sorted.map((m) => {
               const w = workerMap[m.worker_id];
+              const color = getAvatarColor(m.worker_id);
               return (
                 <tr
                   key={m.worker_id}
@@ -80,11 +124,18 @@ export default function WorkerTable({ workers, metrics, selected, onSelect }: Pr
                   onClick={() => onSelect(selected === m.worker_id ? null : m.worker_id)}
                 >
                   <td>
-                    <div style={{ fontWeight: 600 }}>{w?.name ?? m.worker_id}</div>
-                    <div style={{ fontSize: 11, color: 'var(--muted)' }}>{m.worker_id} · {w?.department}</div>
+                    <div className="cell-with-avatar">
+                      <div className="avatar" style={{ background: color + '22', color }}>
+                        {getInitials(w?.name ?? m.worker_id)}
+                      </div>
+                      <div className="cell-name">
+                        <span className="cell-name-primary">{w?.name ?? m.worker_id}</span>
+                        <span className="cell-name-secondary">{m.worker_id} Â· {w?.department}</span>
+                      </div>
+                    </div>
                   </td>
-                  <td>{fmtDuration(m.active_time_seconds)}</td>
-                  <td>{fmtDuration(m.idle_time_seconds)}</td>
+                  <td style={{ color: 'var(--green)' }}>{fmtDuration(m.active_time_seconds)}</td>
+                  <td style={{ color: 'var(--yellow)' }}>{fmtDuration(m.idle_time_seconds)}</td>
                   <td>
                     <div className="progress-wrap">
                       <div className="progress-bar">
@@ -92,9 +143,7 @@ export default function WorkerTable({ workers, metrics, selected, onSelect }: Pr
                           className="progress-fill"
                           style={{
                             width: `${Math.min(m.utilization_pct, 100)}%`,
-                            background:
-                              m.utilization_pct >= 75 ? '#22c55e' :
-                              m.utilization_pct >= 50 ? '#f59e0b' : '#ef4444',
+                            background: m.utilization_pct >= 75 ? 'var(--green)' : m.utilization_pct >= 50 ? 'var(--yellow)' : 'var(--red)',
                           }}
                         />
                       </div>
@@ -103,8 +152,8 @@ export default function WorkerTable({ workers, metrics, selected, onSelect }: Pr
                       </span>
                     </div>
                   </td>
-                  <td style={{ fontWeight: 600 }}>{m.total_units_produced.toLocaleString()}</td>
-                  <td>{r1(m.units_per_hour)}</td>
+                  <td style={{ fontWeight: 700 }}>{m.total_units_produced.toLocaleString()}</td>
+                  <td style={{ color: 'var(--subtle)' }}>{r1(m.units_per_hour)}</td>
                 </tr>
               );
             })}

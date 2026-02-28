@@ -57,15 +57,15 @@ curl -X POST http://localhost:5000/api/seed/refresh
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │  FACTORY FLOOR                                                      │
-│                                                                      │
+│                                                                     │
 │  [CCTV Camera]──CV Model──▶ Edge Agent (gateway / local broker)    │
-│  [CCTV Camera]──CV Model──▶     │                                   │
-│       ...                       │  POST /api/events  (JSON batch)   │
+│  [CCTV Camera]──CV Model──▶ POST /api/events  (JSON batch)         │
+│       ...                                                           │
 └─────────────────────────────────┼───────────────────────────────────┘
                                   │
                     ┌─────────────▼──────────────┐
-                    │   Express + Mongoose API    │
-                    │   ─────────────────────── │
+                    │   Express + Mongoose API   │
+                    │   ───────────────────────  │
                     │   POST /events  (ingest)   │
                     │   GET  /metrics/*          │
                     │   GET  /workers            │
@@ -74,17 +74,17 @@ curl -X POST http://localhost:5000/api/seed/refresh
                     └─────────────┬──────────────┘
                                   │
                     ┌─────────────▼──────────────┐
-                    │       MongoDB Atlas         │
-                    │   workers / workstations /  │
-                    │   events collections        │
+                    │       MongoDB Atlas        │
+                    │   workers / workstations / │
+                    │   events collections       │
                     └─────────────┬──────────────┘
                                   │
                     ┌─────────────▼──────────────┐
-                    │   React + Vite (nginx)      │
-                    │   ─────────────────────── │
-                    │   Factory summary cards     │
-                    │   Worker & station tables   │
-                    │   Detail panels + charts    │
+                    │   React + Vite (nginx)     │
+                    │   ───────────────────────  │
+                    │   Factory summary cards    │
+                    │   Worker & station tables  │
+                    │   Detail panels + charts   │
                     └────────────────────────────┘
 ```
 
@@ -98,7 +98,7 @@ The **Edge Agent** is the thin bridge between cameras and the API. In this exerc
 ## Database Schema
 
 ### `workers`
-| Field        | Type   | Description              |
+| Field        | Type   | Description             |
 |-------------|--------|--------------------------|
 | `worker_id` | String | Unique ID (W1–W6)        |
 | `name`      | String | Full name                |
@@ -106,7 +106,7 @@ The **Edge Agent** is the thin bridge between cameras and the API. In this exerc
 | `shift`     | String | Morning / Evening        |
 
 ### `workstations`
-| Field        | Type   | Description                    |
+| Field       | Type   | Description                    |
 |-------------|--------|--------------------------------|
 | `station_id`| String | Unique ID (S1–S6)              |
 | `name`      | String | Display name                   |
@@ -115,15 +115,15 @@ The **Edge Agent** is the thin bridge between cameras and the API. In this exerc
 | `capacity`  | Number | Max workers at once            |
 
 ### `events`
-| Field           | Type   | Description                                  |
-|----------------|--------|----------------------------------------------|
-| `timestamp`    | Date   | ISO 8601 timestamp from camera               |
-| `worker_id`    | String | References `workers.worker_id`               |
-| `workstation_id`| String| References `workstations.station_id`         |
-| `event_type`   | Enum   | `working` / `idle` / `absent` / `product_count` |
-| `confidence`   | Number | Model confidence [0–1]                       |
-| `count`        | Number | Units produced (only for `product_count`)    |
-| `dedup_key`    | String | **Unique** SHA-256 of timestamp+worker+station+type |
+| Field           | Type   | Description                                         |
+|-----------------|--------|-----------------------------------------------------| 
+| `timestamp`     | Date   | ISO 8601 timestamp from camera                      |
+| `worker_id`     | String | References `workers.worker_id`                      |
+| `workstation_id`| String | References `workstations.station_id`                |
+| `event_type`    | Enum   | `working` / `idle` / `absent` / `product_count`     |
+| `confidence`    | Number | Model confidence [0–1]                              |
+| `count`         | Number | Units produced (only for `product_count`)           |
+| `dedup_key`     | String | **Unique** SHA-256 of timestamp+worker+station+type |
 
 **Indexes:** `(worker_id, timestamp)`, `(workstation_id, timestamp)`, `timestamp`, `event_type`, unique on `dedup_key`.
 
@@ -142,28 +142,28 @@ The **Edge Agent** is the thin bridge between cameras and the API. In this exerc
 ### Worker Metrics
 
 | Metric                  | Definition                                      |
-|------------------------|-------------------------------------------------|
-| `active_time_seconds`  | Sum of durations where `event_type = 'working'` |
-| `idle_time_seconds`    | Sum of durations where `event_type = 'idle'`    |
-| `absent_time_seconds`  | Sum of durations where `event_type = 'absent'`  |
-| `utilization_pct`      | `active / (active + idle) × 100`                |
-| `total_units_produced` | Sum of `count` across all `product_count` events|
-| `units_per_hour`       | `total_units / (active_time / 3600)`             |
-| `shift_duration_seconds`| `last_event_ts − first_event_ts`               |
+|-------------------------|-------------------------------------------------|
+| `active_time_seconds`   | Sum of durations where `event_type = 'working'` |
+| `idle_time_seconds`     | Sum of durations where `event_type = 'idle'`    |
+| `absent_time_seconds`   | Sum of durations where `event_type = 'absent'`  |
+| `utilization_pct`       | `active / (active + idle) × 100`                |
+| `total_units_produced`  | Sum of `count` across all `product_count` events|
+| `units_per_hour`        | `total_units / (active_time / 3600)`            |
+| `shift_duration_seconds`| `last_event_ts − first_event_ts`                |
 
 ### Workstation Metrics
 
 | Metric                  | Definition                                            |
-|------------------------|-------------------------------------------------------|
-| `occupancy_seconds`    | Sum of durations for `working` + `idle` events        |
-| `utilization_pct`      | `working_duration / occupancy × 100`                  |
-| `total_units_produced` | Sum of `count` for `product_count` events at station  |
-| `throughput_rate`      | `total_units / (occupancy / 3600)` — units per hour   |
+|-------------------------|-------------------------------------------------------|
+| `occupancy_seconds`     | Sum of durations for `working` + `idle` events        |
+| `utilization_pct`       | `working_duration / occupancy × 100`                  |
+| `total_units_produced`  | Sum of `count` for `product_count` events at station  |
+| `throughput_rate`       | `total_units / (occupancy / 3600)` — units per hour   |
 
 ### Factory Metrics
 
 | Metric                     | Definition                                      |
-|---------------------------|-------------------------------------------------|
+|----------------------------|-------------------------------------------------|
 | `total_productive_seconds` | Sum of `active_time_seconds` across all workers |
 | `total_units_produced`     | Sum of all `product_count` counts               |
 | `avg_production_rate`      | Mean of `units_per_hour` across active workers  |
