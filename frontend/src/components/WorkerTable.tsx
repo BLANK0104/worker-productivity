@@ -74,7 +74,7 @@ export default function WorkerTable({ workers, metrics, selected, onSelect }: Pr
           </svg>
           <input
             type="text"
-            placeholder="Search workersâ€¦"
+            placeholder="Search workers…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ width: 180 }}
@@ -130,7 +130,7 @@ export default function WorkerTable({ workers, metrics, selected, onSelect }: Pr
                       </div>
                       <div className="cell-name">
                         <span className="cell-name-primary">{w?.name ?? m.worker_id}</span>
-                        <span className="cell-name-secondary">{m.worker_id} Â· {w?.department}</span>
+                        <span className="cell-name-secondary">{m.worker_id} · {w?.department}</span>
                       </div>
                     </div>
                   </td>

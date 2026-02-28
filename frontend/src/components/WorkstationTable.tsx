@@ -12,11 +12,11 @@ interface Props {
 type SortKey = 'station_id' | 'occupancy_seconds' | 'utilization_pct' | 'total_units_produced' | 'throughput_rate';
 
 const TYPE_ICONS: Record<string, string> = {
-  assembly:    'âš™',
-  packaging:   'ðŸ“¦',
-  inspection:  'ðŸ”',
-  welding:     'ðŸ”§',
-  painting:    'ðŸŽ¨',
+  assembly:    '⚙',
+  packaging:   '📦',
+  inspection:  '🔍',
+  welding:     '🔧',
+  painting:    '🎨',
 };
 
 const SortIcon = ({ active, dir }: { active: boolean; dir: 1 | -1 }) => (
@@ -67,7 +67,7 @@ export default function WorkstationTable({ workstations, metrics, selected, onSe
           </svg>
           <input
             type="text"
-            placeholder="Search stationsâ€¦"
+            placeholder="Search stations…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ width: 180 }}
@@ -117,11 +117,11 @@ export default function WorkstationTable({ workstations, metrics, selected, onSe
                   <td>
                     <div className="cell-with-avatar">
                       <div className="avatar" style={{ background: 'var(--accent-dim)', color: 'var(--accent-hover)', borderRadius: 8, fontSize: 16 }}>
-                        {TYPE_ICONS[s?.type ?? ''] ?? 'ðŸ­'}
+                        {TYPE_ICONS[s?.type ?? ''] ?? '🏭'}
                       </div>
                       <div className="cell-name">
                         <span className="cell-name-primary">{s?.name ?? m.station_id}</span>
-                        <span className="cell-name-secondary">{m.station_id} Â· {s?.type} Â· {s?.location}</span>
+                        <span className="cell-name-secondary">{m.station_id} · {s?.type} · {s?.location}</span>
                       </div>
                     </div>
                   </td>
