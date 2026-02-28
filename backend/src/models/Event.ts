@@ -9,6 +9,7 @@ export interface IEvent extends Document {
   event_type: EventType;
   confidence: number;
   count: number;
+  model_version: string;
   dedup_key: string;
   createdAt: Date;
 }
@@ -25,6 +26,7 @@ const EventSchema = new Schema<IEvent>(
     },
     confidence: { type: Number, default: 1.0, min: 0, max: 1 },
     count: { type: Number, default: 0 },
+    model_version: { type: String, default: 'cv-activity-v1.0.0' },
     // dedup_key is a hash of (timestamp + worker_id + workstation_id + event_type)
     dedup_key: { type: String, required: true, unique: true },
   },

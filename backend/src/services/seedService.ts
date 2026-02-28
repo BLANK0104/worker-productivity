@@ -46,6 +46,7 @@ type RawEvent = {
   event_type: EventType;
   confidence: number;
   count: number;
+  model_version: string;
 };
 
 function addMinutes(date: Date, mins: number): Date {
@@ -69,6 +70,10 @@ function generateShift(
   // How productive this worker is today (random variance)
   const productivity = 0.65 + Math.random() * 0.30; // 65–95%
 
+  // Simulate model version: most events on recent version, some on older
+  const MODEL_VERSIONS = ['cv-activity-v1.0.0', 'cv-activity-v1.1.0', 'cv-activity-v2.0.0'];
+  const modelVersion = MODEL_VERSIONS[Math.floor(Math.random() * MODEL_VERSIONS.length)];
+
   const push = (
     offsetMins: number,
     event_type: EventType,
@@ -76,7 +81,15 @@ function generateShift(
     count = 0
   ) => {
     const ts = addMinutes(cursor, offsetMins);
-    events.push({ timestamp: ts, worker_id, workstation_id, event_type, confidence: parseFloat(confidence.toFixed(3)), count });
+    events.push({
+      timestamp: ts,
+      worker_id,
+      workstation_id,
+      event_type,
+      confidence: parseFloat(confidence.toFixed(3)),
+      count,
+      model_version: modelVersion,
+    });
   };
 
   // Arrival
@@ -154,13 +167,14 @@ export async function seedDatabase(days = 7): Promise<{ inserted: number; skippe
   }
 
   // Build documents with dedup keys; skip duplicates using ordered:false bulk write
-  type EventDoc = {
+   type EventDoc = {
     timestamp: Date;
     worker_id: string;
     workstation_id: string;
     event_type: EventType;
     confidence: number;
     count: number;
+    model_version: string;
     dedup_key: string;
   };
 

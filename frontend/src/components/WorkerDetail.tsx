@@ -1,5 +1,6 @@
 import type { Worker, WorkerMetrics } from '../types';
 import { fmtDuration, r1, utilColour } from '../utils';
+import type { DateRange } from '../api';
 import {
   RadialBarChart,
   RadialBar,
@@ -9,14 +10,17 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import TimeSeriesChart from './TimeSeriesChart';
+import ShiftComparison from './ShiftComparison';
 
 interface Props {
   worker: Worker;
   metrics: WorkerMetrics | null;
+  range?: DateRange;
   onClose: () => void;
 }
 
-export default function WorkerDetail({ worker, metrics, onClose }: Props) {
+export default function WorkerDetail({ worker, metrics, range, onClose }: Props) {
   const timeData = metrics
     ? [
         { name: 'Active', value: metrics.active_time_seconds, color: '#22c55e' },
@@ -125,6 +129,21 @@ export default function WorkerDetail({ worker, metrics, onClose }: Props) {
               </div>
             </>
           )}
+
+          {/* Daily trend chart */}
+          <div className="sep" />
+          <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600, marginBottom: 8 }}>DAILY TREND</div>
+          <TimeSeriesChart
+            entity_id={worker.worker_id}
+            entity_type="worker"
+            entity_name={worker.name}
+            range={range}
+          />
+
+          {/* Shift comparison */}
+          <div className="sep" />
+          <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600, marginBottom: 8 }}>TODAY vs 7-DAY AVG</div>
+          <ShiftComparison worker_id={worker.worker_id} worker_name={worker.name} />
         </>
       )}
     </div>

@@ -7,6 +7,8 @@ import {
   getFactoryMetrics,
   seedData,
   refreshData,
+  subscribeToUpdates,
+  getModelVersions,
 } from './api';
 import type {
   Worker,
@@ -15,13 +17,17 @@ import type {
   WorkstationMetrics,
   FactoryMetrics,
 } from './types';
+import type { ModelVersion } from './api';
 import FactorySummary from './components/FactorySummary';
 import WorkerTable from './components/WorkerTable';
 import WorkstationTable from './components/WorkstationTable';
 import WorkerDetail from './components/WorkerDetail';
 import WorkstationDetail from './components/WorkstationDetail';
+import ErrorBoundary from './components/ErrorBoundary';
+import AlertPanel from './components/AlertPanel';
+import EventFeed from './components/EventFeed';
 
-type Tab = 'overview' | 'workers' | 'workstations';
+type Tab = 'overview' | 'workers' | 'workstations' | 'alerts';
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('overview');
@@ -46,6 +52,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
   const [seedMsg, setSeedMsg] = useState<string | null>(null);
+  const [modelVersions, setModelVersions] = useState<ModelVersion[]>([]);
 
   const range = { from: from || undefined, to: to || undefined };
 
@@ -74,6 +81,28 @@ export default function App() {
   }, [from, to]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Live SSE subscription — reload when new events are ingested
+  useEffect(() => {
+    const unsub = subscribeToUpdates(() => { load(); });
+    return unsub;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fetch model version stats
+  useEffect(() => {
+    getModelVersions().then(setModelVersions).catch(() => {/* silent */});
+  }, []);
+
+  // Date preset helpers
+  const isoDate = (d: Date) => d.toISOString().slice(0, 10);
+  const setPreset = (days: number) => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - days);
+    setFrom(isoDate(start));
+    setTo(isoDate(end));
+  };
 
   const handleSeed = async (refresh: boolean) => {
     setSeeding(true);
@@ -105,6 +134,7 @@ export default function App() {
     : null;
 
   return (
+    <ErrorBoundary>
     <div className="app">
       {/* ── Top bar ── */}
       <nav className="topbar">
@@ -143,6 +173,10 @@ export default function App() {
         {/* ── Date filters ── */}
         <div className="filter-row" style={{ marginBottom: 20 }}>
           <span className="filter-label">Date range:</span>
+          <button className="btn btn-sm" onClick={() => setPreset(0)}>Today</button>
+          <button className="btn btn-sm" onClick={() => setPreset(7)}>7 Days</button>
+          <button className="btn btn-sm" onClick={() => setPreset(30)}>30 Days</button>
+          <span className="filter-label" style={{ opacity: 0.5 }}>|</span>
           <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           <span className="filter-label">to</span>
           <input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
@@ -155,7 +189,7 @@ export default function App() {
 
         {/* ── Tabs ── */}
         <div className="tabs">
-          {(['overview', 'workers', 'workstations'] as Tab[]).map((t) => (
+          {(['overview', 'workers', 'workstations', 'alerts'] as Tab[]).map((t) => (
             <button
               key={t}
               className={`tab-btn ${tab === t ? 'active' : ''}`}
@@ -255,6 +289,33 @@ export default function App() {
                     </table>
                   </div>
                 </div>
+
+                {/* Model version panel */}
+                {modelVersions.length > 0 && (
+                  <div className="card" style={{ marginTop: 24 }}>
+                    <div className="card-header">
+                      <span className="card-title">AI Model Versions</span>
+                    </div>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Model Version</th>
+                          <th>Events</th>
+                          <th>Avg Confidence</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {modelVersions.map((mv) => (
+                          <tr key={mv.version}>
+                            <td><code style={{ fontSize: 12 }}>{mv.version}</code></td>
+                            <td>{mv.event_count.toLocaleString()}</td>
+                            <td style={{ color: mv.avg_confidence >= 0.75 ? '#22c55e' : '#f59e0b' }}>{(mv.avg_confidence * 100).toFixed(1)}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </>
             )}
 
@@ -271,6 +332,7 @@ export default function App() {
                   <WorkerDetail
                     worker={selectedWorkerData}
                     metrics={selectedWorkerMetrics}
+                    range={range}
                     onClose={() => setSelectedWorker(null)}
                   />
                 )}
@@ -290,14 +352,27 @@ export default function App() {
                   <WorkstationDetail
                     station={selectedStationData}
                     metrics={selectedStationMetrics}
+                    range={range}
                     onClose={() => setSelectedStation(null)}
                   />
                 )}
+              </div>
+            )}
+            {/* ── Alerts tab ── */}
+            {tab === 'alerts' && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                <ErrorBoundary>
+                  <AlertPanel />
+                </ErrorBoundary>
+                <ErrorBoundary>
+                  <EventFeed live />
+                </ErrorBoundary>
               </div>
             )}
           </>
         )}
       </main>
     </div>
+    </ErrorBoundary>
   );
 }

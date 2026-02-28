@@ -1,5 +1,7 @@
 import type { Workstation, WorkstationMetrics } from '../types';
 import { fmtDuration, r1, utilColour } from '../utils';
+import type { DateRange } from '../api';
+import TimeSeriesChart from './TimeSeriesChart';
 import {
   RadialBarChart,
   RadialBar,
@@ -9,10 +11,11 @@ import {
 interface Props {
   station: Workstation;
   metrics: WorkstationMetrics | null;
+  range?: DateRange;
   onClose: () => void;
 }
 
-export default function WorkstationDetail({ station, metrics, onClose }: Props) {
+export default function WorkstationDetail({ station, metrics, range, onClose }: Props) {
   return (
     <div className="card" style={{ position: 'sticky', top: 80, height: 'fit-content' }}>
       <div className="card-header">
@@ -100,6 +103,16 @@ export default function WorkstationDetail({ station, metrics, onClose }: Props) 
               <div className="progress-fill" style={{ width: '100%', background: '#4f8ef7' }} />
             </div>
           </div>
+
+          {/* Daily trend chart */}
+          <div className="sep" />
+          <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600, marginBottom: 8 }}>DAILY TREND</div>
+          <TimeSeriesChart
+            entity_id={station.station_id}
+            entity_type="station"
+            entity_name={station.name}
+            range={range}
+          />
         </>
       )}
     </div>
